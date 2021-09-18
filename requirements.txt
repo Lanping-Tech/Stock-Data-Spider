@@ -1,0 +1,9 @@
+beautifulsoup4
+selenium
+pandas
+openpyxl
+schedule
+tqdm
+
+# nohup python spider.py >> output.log 2>&1 &
+# http://npm.taobao.org/mirrors/chromedriver/
