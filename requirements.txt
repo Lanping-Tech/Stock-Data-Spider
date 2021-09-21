@@ -4,6 +4,7 @@ pandas
 openpyxl
 schedule
 tqdm
+tushare
 
 # nohup python spider.py >> output.log 2>&1 &
 # http://npm.taobao.org/mirrors/chromedriver/
