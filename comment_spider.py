@@ -172,7 +172,7 @@ def get_data(stock_id):
 
 def json2file(save_path, record):
 	with open(os.path.join(save_path, record['comment_id']+'.json'),"w",encoding='utf-8') as f:
-		json.dump(record,f,ensure_ascii=False)
+		json.dump(record,f,ensure_ascii=False, indent=4)
 
 def main():
 	if not os.path.exists('comment'):
