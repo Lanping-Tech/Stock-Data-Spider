@@ -4,6 +4,6 @@
 
 5个属性：开盘价，收盘价，最低值，最高值，交易量
 
-## Eastmoney-Comment-Spider
+## 股票评论数据爬取
 
 dong方cai富wang个股评论爬取
