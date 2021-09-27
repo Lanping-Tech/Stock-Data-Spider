@@ -74,10 +74,31 @@ def get_driver():
 	# chrome_options.add_argument("--proxy-server={}".format('27.40.124.240:9999'))
 	
 
-	chrome_driver = 'config/chromedriver-win.exe'  #chromedriver的文件位置
+	chrome_driver = 'config/chromedriver-win.exe'  # Win chromedriver的文件位置
+	# chrome_driver = 'config/chromedriver-mac' # MAC chromedriver的文件位置
 	driver = webdriver.Chrome(chrome_options=chrome_options, executable_path = chrome_driver)
 	driver.delete_all_cookies()
 	return driver
+
+def writelog(stock_id, logstr):
+    result_file_open = open(os.path.join('log',stock_id), 'a', encoding='utf-8')
+    result_file_open.write(logstr+'\n')
+    result_file_open.close()
+
+def readlog(stock_id):
+	if not os.path.exists('log'):
+		os.makedirs('log')
+	
+	if os.path.isfile(os.path.join('log',stock_id)):
+		comment_urls = []
+		with open(os.path.join('log',stock_id), 'r',encoding='utf-8') as f:
+			line_list = f.readlines()
+			for i in range(0, len(line_list)):
+				comment_urls.append(line_list[i].rstrip('\n'))
+		print(comment_urls)
+		return set(comment_urls)
+	else:
+		return set()
 
 def text_format(text):
 	text = text.replace(' ','')
@@ -105,7 +126,7 @@ def get_base_info(driver, stock_id, record):
 	else:
 		return {}
 
-def get_all_urls(stock_id, page_id):
+def get_all_urls(stock_id, page_id, all_ready_comment_urls):
 	save_path = os.path.join('comment',stock_id)
 	driver = get_driver()
 	driver.maximize_window()
@@ -123,11 +144,16 @@ def get_all_urls(stock_id, page_id):
 			record['subcomments'] = item.select('span.l2.a2')[0].get_text()
 			record['comment_url'] = item.select('span.l3.a3 > a')[0].get('href') #.split(',')[-1].split('.')[0]
 			print(record)
+			if record['comment_url'] in all_ready_comment_urls:
+				print('Pass')
+				continue
 			record = get_base_info(driver, stock_id, record)
 			if record:
 				record['comment_id'] = record['comment_url'].split(',')[-1].split('.')[0]
 				# writelog('comment-url-{}.log'.format(stock_id),str(record))
 				json2file(save_path, record)
+				writelog(stock_id, record['comment_url'])
+				all_ready_comment_urls.add(record['comment_url'])
 				records.append(record)
 	driver.quit()
 	return records
@@ -159,12 +185,14 @@ def get_data(stock_id):
 	# 	threads[i].join()
 	# 	records.extend(threads[i].get_result())
 
+	all_ready_comment_urls=readlog(stock_id)
+
 	total_num = 0
 	for i in range(int(page_num)):
 		page_id = i+1
 		print(page_id)
 		
-		rs = get_all_urls(stock_id, page_id)
+		rs = get_all_urls(stock_id, page_id, all_ready_comment_urls)
 		# records.extend(rs)
 		total_num = total_num+len(rs)
 
@@ -178,11 +206,6 @@ def main():
 	if not os.path.exists('comment'):
 		os.makedirs('comment')
 	get_data('000983')
-
-def writelog(file_name, log):
-	with open(file_name, mode='a',encoding='utf-8') as filename:
-		filename.write(log)
-		filename.write('\n') # 换行
 
 if __name__ == "__main__":
 	main()
