@@ -113,7 +113,7 @@ def get_url_item(driver, stock_id, record, all_ready_comment_urls):
 	if record['comment_url'] in all_ready_comment_urls:
 		return
 	else:
-		sleep(1)
+		sleep(0.5)
 		record = get_base_info(driver, stock_id, record)
 		if record:
 			record['comment_id'] = record['comment_url'].split(',')[-1].split('.')[0]
@@ -138,11 +138,12 @@ def get_all_urls(stock_id, page_id, all_pre_comment_records):
 			record['read'] = item.select('span.l1.a1')[0].get_text()
 			record['subcomments'] = item.select('span.l2.a2')[0].get_text()
 			record['comment_url'] = item.select('span.l3.a3 > a')[0].get('href') #.split(',')[-1].split('.')[0]
-			print(record)
+			
 			if record['comment_url'] in all_pre_comment_records:
-				print('Pass')
+				print(record['comment_url'] + ' Pass!')
 				continue
 
+			print(record)
 			record_str = '{{"read": "{}", "subcomments": "{}", "comment_url": "{}"}}'.format(record['read'],record['subcomments'],record['comment_url'])
 			write_log(stock_id+'-pre', record_str)
 			records.append(record)
