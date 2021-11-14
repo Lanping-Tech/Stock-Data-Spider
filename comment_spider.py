@@ -76,7 +76,7 @@ def get_driver():
 	# chrome_options.add_argument('--proxy-server={}'.format('27.40.124.240:9999'))
 	
 
-	chrome_driver = 'config/chromedriver-mac'  # Win chromedriver的文件位置
+	chrome_driver = 'config/chromedriver-win.exe'  # Win chromedriver的文件位置
 	# chrome_driver = 'config/chromedriver-mac' # MAC chromedriver的文件位置
 	driver = webdriver.Chrome(chrome_options=chrome_options, executable_path = chrome_driver)
 	driver.delete_all_cookies()
@@ -132,13 +132,14 @@ def get_all_urls(stock_id, page_id, all_pre_comment_records):
 	soup = BeautifulSoup(driver.page_source, 'html.parser')
 	items = soup.select('#articlelistnew > div')
 	records = []
+	flag = False
 	for item in items:
 		if item.get('class')[0] == 'articleh':
 			record = {}
 			record['read'] = item.select('span.l1.a1')[0].get_text()
 			record['subcomments'] = item.select('span.l2.a2')[0].get_text()
 			record['comment_url'] = item.select('span.l3.a3 > a')[0].get('href') #.split(',')[-1].split('.')[0]
-			
+			flag = flag | record['comment_url'].startswith('/news,{}'.format(stock_id))
 			if record['comment_url'] in all_pre_comment_records:
 				print(record['comment_url'] + ' Pass!')
 				continue
@@ -148,7 +149,7 @@ def get_all_urls(stock_id, page_id, all_pre_comment_records):
 			write_log(stock_id+'-pre', record_str)
 			records.append(record)
 	driver.quit()
-	return records
+	return records, flag
 
 
 def get_data(stock_id):
@@ -161,8 +162,8 @@ def get_data(stock_id):
 	sleep(1)
 
 	soup = BeautifulSoup(driver.page_source, 'html.parser')
-	# page_num = soup.select('#articlelistnew > div.pager > span > span > span:nth-child(1) > span')[0].get_text()
-	page_num = 37
+	page_num = soup.select('#articlelistnew > div.pager > span > span > span:nth-child(1) > span')[0].get_text()
+	# page_num = 37
 	driver.quit()
 
 	records = []
@@ -176,9 +177,12 @@ def get_data(stock_id):
 		page_id = i+1
 		print(page_id, str(len(records)+len(all_pre_comment_records)))
 		
-		rs = get_all_urls(stock_id, page_id, all_pre_comment_records)
-		records.extend(rs)
-		write_page(stock_id+'-page', str(page_id-1))
+		rs, flag = get_all_urls(stock_id, page_id, all_pre_comment_records)
+		if flag:
+			records.extend(rs)
+			write_page(stock_id+'-page', str(page_id-1))
+		else:
+			return 
 
 	print('编号：{}，共计{}页, {}条记录。'.format(stock_id, page_num, len(records)+len(all_pre_comment_records)))
 
@@ -200,7 +204,7 @@ def json2file(save_path, record):
 def main():
 	if not os.path.exists('comment'):
 		os.makedirs('comment')
-	get_data('000983')
+	get_data('600691')
 
 if __name__ == '__main__':
 	main()
